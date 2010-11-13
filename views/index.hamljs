@@ -1,0 +1,11 @@
+#channels
+  %header
+    %h2 Channels
+  %ul
+    - each item,index in channels
+      %li
+        %a{href:index}= item.name
+#tv
+  %h2 LIVE-TV
+  %video{width:"608",height:"342",controls:"controls","autoplay":"autoplay"}
+    %source{src:"/stream/prog_index.m3u8"}

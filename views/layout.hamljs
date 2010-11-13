@@ -1,0 +1,15 @@
+!!! 5
+%html
+  %head
+    %title aon2http    
+    %script{src:'https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js'}
+    %script{src:'js/socket.io.js'}
+    %script{src:'js/functions.js'}
+    %link{rel:"stylesheet",href:"css/styles.css"}
+    %link{href:'http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:regular,bold&subset=latin', rel:'stylesheet', type:'text/css'}
+  %body
+    #wrapper
+      %header
+        %h1 aon2http
+      %section#content
+        !=body
