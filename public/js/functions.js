@@ -1,4 +1,4 @@
-var socket = new io.Socket('10.0.0.31',{port:8000});
+var socket = new io.Socket(host,{port:port});
 socket.connect();
 socket.on('connect', function(){
 	

@@ -4,7 +4,7 @@ var express = require("express"),
 	io = require("socket.io"),
 	sys = require("sys"),
 	spawn = require('child_process').spawn,
-	path = require("path"),  
+	path = require("path");  
 	util = require("util");
 
 
@@ -21,8 +21,8 @@ startStream = function(){
 		}
 	})
 
-	vlc = spawn('/Applications/VLC.app/Contents/MacOS/VLC',[channels[index].address,'-I','rc','--sout=#transcode{fps=25,vcodec=h264,venc=x264{aud,profile=baseline,level=30, keyint=30,bframes=0,ref=1,nocabac},acodec=mp3,ab=56,audio-sync,deinterlace}:standard{mux=ts,dst=-,access=file}']),
-	stream = spawn('mediastreamsegmenter',["-O","-b","http://10.0.0.31:8000/stream/","-f","public/stream/","-s","3","-D","-t","5"]);
+	vlc = spawn(config.vlc,[channels[index].address,'-I','rc','--sout=#transcode{fps=25,vcodec=h264,venc=x264{aud,profile=baseline,level=30, keyint=30,bframes=0,ref=1,nocabac},acodec=mp3,ab=56,audio-sync,deinterlace}:standard{mux=ts,dst=-,access=file}']),
+	stream = spawn(config.segmenter,["-O","-b","http://"+config.host+":"+config.port+"/stream/","-f","public/stream/","-s","3","-D","-t","5"]);
 
  	vlc.stdout.on('data', function (data) {
  	  stream.stdin.write(data);
@@ -53,64 +53,61 @@ startStream = function(){
  	    console.log('stream process exited with code ' + code);
 		startStream();
  	});
-
-	// iv = setInterval(function(){
-	// 	fs.stat('public/stream/prog_index.m3u8',function(err,stat){
-	// 		if(!err) {
-	// 			clearInterval(iv);
-	// 			if(sc) {
-	// 				sc.send('ready');
-	// 			}
-	// 		}
-	// 	})
-	// 	
-	// },100)
 }
-	
-var app = express.createServer();
-
-app.configure(function(){
-    app.use(express.methodOverride());
-    app.use(express.bodyDecoder());
-    app.use(app.router);
-    app.use(express.staticProvider(__dirname + '/public'));
-	app.set('view engine', 'hamljs');
-});
-
-app.configure('development', function(){
-    app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
-});
-
-app.configure('production', function(){
-    app.use(express.errorHandler());
-});
 
 var channels;
-fs.readFile('channels.json', function(err, data){
-	if(err) throw err;
-	channels = JSON.parse(data);
-	startStream();
-});
-
-app.get('/', function(req, res){
-    res.render('index',{
-		locals: {
-			channels: channels
-		}
-	});
-});
-
-app.listen(8000);
+var config;
 var sc;
-var socket = io.listen(app); 
-socket.on('connection', function(client){ 
-	sc = client;
-	client.on('message', function(data){
-		if(data.channel) {
-			index = data.channel;
-			if(vlc)
-				vlc.kill();
-		}
-	}) 
-	client.on('disconnect', function(){}) 
+fs.readFile('config.json', function(err, data){
+	if(err) throw err;
+	config = JSON.parse(data);
+
+	fs.readFile('channels.json', function(err, data){
+		if(err) throw err;
+		channels = JSON.parse(data);
+		startStream();
+	});
+
+	var app = express.createServer();
+
+	app.configure(function(){
+	    app.use(express.methodOverride());
+	    app.use(express.bodyDecoder());
+	    app.use(app.router);
+	    app.use(express.staticProvider(__dirname + '/public'));
+		app.set('view engine', 'hamljs');
+	});
+
+	app.configure('development', function(){
+	    app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
+	});
+
+	app.configure('production', function(){
+	    app.use(express.errorHandler());
+	});
+
+	app.get('/', function(req, res){
+	    res.render('index',{
+			locals: {
+				channels: channels,
+				host: '<script type="text/javascript"> host = "'+config.host+'"; port = "'+config.port+'"</script>'
+			}
+		});
+	});
+
+	app.listen(config.port);
+	var socket = io.listen(app); 
+	socket.on('connection', function(client){ 
+		sc = client;
+		client.on('message', function(data){
+			if(data.channel) {
+				index = data.channel;
+				if(vlc)
+					vlc.kill();
+			}
+		}) 
+		client.on('disconnect', function(){}) 
+	});
+
 });
+	

@@ -1,7 +1,8 @@
 !!! 5
 %html
   %head
-    %title aon2http    
+    %title aon2http
+    !=host
     %script{src:'https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js'}
     %script{src:'js/socket.io.js'}
     %script{src:'js/functions.js'}
